@@ -72,7 +72,7 @@ It enables automated, large-scale annotation of product images, reducing manual 
     pip install -r requirements.txt
     ```
 3. **(Optional) Prepare Excel size data**  
-   Prepare your Excel file according to the template (product code in column 2, sizes in columns 3–5).
+   Prepare your Excel file according to the template (product code in column 2, sizes in columns 3(height),4(width),5(depth)).
 
 ---
 
