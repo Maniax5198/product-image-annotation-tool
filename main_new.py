@@ -159,7 +159,7 @@ class PikeeGeneratorApp:
                     errors.append(f"Amount of chosen Files should not exceed {self.max_files} !")
                     self.text_execution_status.insert(END, "ERRORS:\n" + "\n".join(errors) + "\n", "error")
                     self.text_execution_status.config(state="disabled")
-                    return  # Không cần enable ở đây, sẽ enable ở finally
+                    return  
                 self.stop_processing = False
                 for i, file_path in enumerate(file_paths, 1):
                     if self.stop_processing:
@@ -219,7 +219,7 @@ class PikeeGeneratorApp:
         Entry(frame_code, textvariable=self.code_tab2, width=25).place(x=170, y=10)
         Button(frame_code, text="Load Image", command=self.load_image_by_code_tab2).place(x=420, y=8)
 
-        base_y = 60  # Tăng mọi thành phần phía dưới lên 50px so với cũ
+        base_y = 60  
 
         # Input
         Label(tab, text="Input Image: ").place(x=10, y=base_y)
@@ -252,7 +252,7 @@ class PikeeGeneratorApp:
             self.entry_fields[label]['end_x'].place(x=310, y=y_offset)
             self.entry_fields[label]['end_y'] = Entry(tab, width=6)
             self.entry_fields[label]['end_y'].place(x=360, y=y_offset)
-            # Nút Edit
+            # Edit
             Button(tab, text=f"Edit {label}", command=lambda l=label: self.update_points(l), width=10).place(x=430, y=y_offset-2)
         
         
@@ -336,8 +336,7 @@ class PikeeGeneratorApp:
             if not input_file or not output_dir:
                 messagebox.showerror("Error", "Missing input or output path.")
                 return
-
-            # Lấy các toạ độ điểm và text như bình thường
+     
             selected_points = []
             if self.entry_height_x.get() and self.exit_height_x.get():
                 selected_points.append((int(self.entry_height_x.get()), int(self.entry_height_y.get())))
@@ -359,10 +358,9 @@ class PikeeGeneratorApp:
             text2 = self.number_text2.get().strip() or "(choose) cm"
             text3 = self.number_text3.get().strip() or "(choose) cm"
 
-            # Nếu chọn "Apply for all color"
             if hasattr(self, "apply_for_all_color_tab2") and self.apply_for_all_color_tab2.get():
                 product_code = os.path.basename(input_file)[:6]
-                # Đảm bảo đã chọn thư mục gốc ảnh ở Tab 4
+                
                 folder_origin = self.source_image_folder.get() if hasattr(self, "source_image_folder") else ""
                 if not folder_origin or not os.path.isdir(folder_origin):
                     messagebox.showerror("Error", "Please select the source image folder in Tab 4 first!")
@@ -417,7 +415,7 @@ class PikeeGeneratorApp:
             existing_points += fetch_pair(self.entry_width_x, self.entry_width_y, self.exit_width_x, self.exit_width_y)
             existing_points += fetch_pair(self.entry_depth_x, self.entry_depth_y, self.exit_depth_x, self.exit_depth_y)
 
-            # Lấy điểm text positions (nếu có)
+           
             text_points = []
             if self.text1_x.get() and self.text1_y.get():
                 text_points.append((int(self.text1_x.get()), int(self.text1_y.get())))
@@ -433,7 +431,7 @@ class PikeeGeneratorApp:
                 text_points.append(None)
 
             selected_points = manual_overlay_selector(image_path, existing_points=existing_points, text_points=text_points)
-            # Cập nhật lại entry như cũ
+            
             if len(selected_points) >= 2:
                 self.entry_height_x.delete(0, END)
                 self.entry_height_x.insert(0, selected_points[0][0])
@@ -482,17 +480,15 @@ class PikeeGeneratorApp:
             if x1.get() and x2.get():
                 existing = [(int(x1.get()), int(y1.get())), (int(x2.get()), int(y2.get()))]
 
-            # Lấy tất cả các lines Height, Width, Depth (có thể có hoặc None)
+            
             all_lines = self.get_all_lines()
-            # Loại line hiện tại đang edit để tránh trùng (OPTIONAL, hoặc cứ truyền cả 3 cũng được)
-            # Dùng hết cả 3 line (để overlay tự nhận diện)
             background_lines = [line for line in all_lines if line is not None]
 
             pts = manual_overlay_select_pair(
                 path,
                 f"{kind} ",
                 existing_pair=existing,
-                background_lines=background_lines  # truyền vào overlay để hiện đủ 3 đường
+                background_lines=background_lines  
             )
             if len(pts) == 2:
                 x1.delete(0, END)
@@ -702,19 +698,19 @@ class PikeeGeneratorApp:
             "Note:\n Selected Images in Input Folder must be located inside a '_shops' folder within each product code folder."
         )
 
-        # Chỉ tạo 1 Text widget và cho vừa trong frame
+        
         text_widget = Text(
             text_frame,
             wrap="word",
-            width=60,        # vừa với frame width=500, Arial 10
-            height=11,       # đủ với frame height=200
+            width=60,        
+            height=11,       
             font=("Arial", 10),
             bg=default_bg,
             bd=0,
             padx=4,
             pady=4
         )
-        text_widget.place(x=1, y=1, width=490, height=195)  # phủ kín text_frame
+        text_widget.place(x=1, y=1, width=490, height=195)  
         text_widget.insert("1.0", instruction)
         text_widget.config(state="disabled")
 
@@ -815,19 +811,19 @@ class PikeeGeneratorApp:
             
         )
 
-        # Chỉ tạo 1 Text widget và cho vừa trong frame
+        
         text_widget = Text(
             text_frame,
             wrap="word",
-            width=60,        # vừa với frame width=500, Arial 10
-            height=11,       # đủ với frame height=200
+            width=60,       
+            height=11,       
             font=("Arial", 10),
             bg=default_bg,
             bd=0,
             padx=4,
             pady=4
         )
-        text_widget.place(x=1, y=1, width=490, height=195)  # phủ kín text_frame
+        text_widget.place(x=1, y=1, width=490, height=195)  
         text_widget.insert("1.0", instruction)
         text_widget.config(state="disabled")
     
