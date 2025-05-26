@@ -14,13 +14,13 @@ def shrink_and_pad_image(image_path,output_path, shrink_percent=15):
     new_width = int(width * scale)
     new_height = int(height * scale)
 
-    # Resize (thu nhỏ) ảnh
+    # Resize 
     resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
     # Tạo ảnh mới màu trắng với kích thước gốc
-    padded_image = np.ones_like(image) * 255  # 255: pixel trắng
+    padded_image = np.ones_like(image) * 255  
 
-    # Tính toán vị trí để dán ảnh đã thu nhỏ vào giữa
+    # dán ảnh đã thu nhỏ vào giữa
     x_offset = (width - new_width) // 2
     y_offset = (height - new_height) // 2
 
