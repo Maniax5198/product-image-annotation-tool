@@ -65,33 +65,44 @@ def detect_product_and_draw_bounds_manual(image_path, output_path, input_filenam
                                            line_color=(96,96,96), text_color=(0,0,0),
                                             text1="(choose) cm", text2="(choose) cm",
                                             text3="(choose) cm",
-                                            font_scale=1.2, thickness=5):
+                                            font_scale=1.2, thickness=5,
+                                            cv2_font=cv2.FONT_HERSHEY_SIMPLEX):
     
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError("Không đọc được ảnh.")
 
 
-    # Vẽ  chiều cao
+    # Vẽ đường chiều cao
     if len(selected_points) >= 2:
         start_v = selected_points[0]
         end_v = selected_points[1]
         cv2.arrowedLine(img, start_v, end_v, line_color, thickness, tipLength=compute_tip_length(start_v, end_v, 20))
         cv2.arrowedLine(img, end_v, start_v, line_color, thickness, tipLength=compute_tip_length(start_v, end_v, 20))
-    # Vẽ  chiều rộng
+    # Vẽ đường chiều rộng
     if len(selected_points) >= 4:
         start_h = selected_points[2]
         end_h = selected_points[3]
         cv2.arrowedLine(img, start_h, end_h, line_color, thickness, tipLength=compute_tip_length(start_h, end_h, 20))
         cv2.arrowedLine(img,end_h, start_h, line_color, thickness, tipLength=compute_tip_length(start_h, end_h, 20))
 
-    # Vẽ  chéo
+    # Vẽ đường chéo
     if len(selected_points) >= 6:
         start_diag = selected_points[4]
         end_diag = selected_points[5]
         cv2.arrowedLine(img, start_diag, end_diag, line_color, thickness, tipLength=compute_tip_length(start_diag, end_diag, 20))
         cv2.arrowedLine(img, end_diag, start_diag, line_color, thickness, tipLength=compute_tip_length(start_diag, end_diag, 20))
 
+    # --- Text (nếu có Excel) ---
+#    product_code = input_filename[:6]
+ #   text1, text2, text3 = "(choose) cm", "(choose) cm", "(choose) cm"
+#    if data_excel is not None:
+#        matched = data_excel[data_excel.iloc[:, 1].astype(str) == product_code]
+#        if not matched.empty:
+#            text1, text2, text3 = matched.iloc[0, 2:5].astype(str).tolist()
+    
+    # --- Ghi text tại vị trí tính toán hoặc thủ công ---
+    # text1 (chiều cao): tự động - giữa đoạn thẳng
     if len(selected_points) >= 2:
         start_v = selected_points[0]
         end_v = selected_points[1]
@@ -100,7 +111,7 @@ def detect_product_and_draw_bounds_manual(image_path, output_path, input_filenam
     else:
         text1_pos = None
     
-    
+    # text2 (chiều rộng): giữa đoạn ngang, cách dưới 10px
     if len(selected_points) >= 4:
         start_h = selected_points[2]
         end_h = selected_points[3]
@@ -110,7 +121,7 @@ def detect_product_and_draw_bounds_manual(image_path, output_path, input_filenam
     else:
         text2_pos = None
     
-  
+    # text3 (chéo): bên trái đoạn chéo, cách 50px
     if len(selected_points) >= 6:
         start_diag = selected_points[4]
         end_diag = selected_points[5]
@@ -118,7 +129,7 @@ def detect_product_and_draw_bounds_manual(image_path, output_path, input_filenam
     else:
         text3_pos = None
     
-   
+    # Nếu người dùng cung cấp vị trí thủ công, dùng ưu tiên
     if text_positions:
         if len(text_positions) >= 1:
             text1_pos = text_positions[0]
@@ -128,13 +139,13 @@ def detect_product_and_draw_bounds_manual(image_path, output_path, input_filenam
             text3_pos = text_positions[2]
             
     if text_positions and len(text_positions) >= 1:
-        cv2.putText(img, text1, text_positions[0], cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, 2)
+        cv2.putText(img, text1, text_positions[0], cv2_font, font_scale, text_color, 2)
 
     if text_positions and len(text_positions) >= 2:
-        cv2.putText(img, text2, text_positions[1], cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, 2)
+        cv2.putText(img, text2, text_positions[1], cv2_font, font_scale, text_color, 2)
 
     if text_positions and len(text_positions) >= 3:
-        cv2.putText(img, text3, text_positions[2], cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, 2)
+        cv2.putText(img, text3, text_positions[2], cv2_font, font_scale, text_color, 2)
 
     cv2.imwrite(output_path, img)
 
