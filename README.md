@@ -3,6 +3,11 @@
 _A Python application for automatic annotation of product images for e-commerce, designed for high-volume and batch processing (10,000+ images). Developed independently for real-world business needs._
 
 ---
+## Downloads 
+
+https://drive.google.com/file/d/1yrgiBhUgoPIZ58ImBInkxCvZiPg8yqfS/view?usp=drive_link
+
+---
 
 ## Overview
 
