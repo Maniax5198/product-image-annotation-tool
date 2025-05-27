@@ -27,7 +27,8 @@ def calculate_ratio_white_and_nonwhite(gray, x, y, w, h, axis='vertical'):
 
 def detect_product_and_draw_bounds(image_path, output_path, data_excel,
                                     input_filename,line_color=(96, 96, 96),
-                                    text_color=(0, 0, 0), font_scale=1.2, thickness=5):
+                                    text_color=(0, 0, 0), font_scale=1.2, thickness=5,
+                                    cv2_font=cv2.FONT_HERSHEY_SIMPLEX):
     
     img = cv2.imread(image_path)
     
@@ -99,9 +100,9 @@ def detect_product_and_draw_bounds(image_path, output_path, data_excel,
 
 
 
-    cv2.putText(img, text1, (x + w + 80, int(y_new + (y_bottom_2 - y_new) / 2)), cv2.FONT_ITALIC, font_scale, text_color, 2)
-    cv2.putText(img, text2, (int(x_left + w / 2), y_bottom_1 + 120), cv2.FONT_ITALIC, font_scale, text_color, 2)
-    cv2.putText(img, text3, (int((start_diag[0] + end_diag[0]) / 2 - 110 - 40), int((start_diag[1] + end_diag[1]) / 2 + 10 + 20)), cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, 2)
+    cv2.putText(img, text1, (x + w + 80, int(y_new + (y_bottom_2 - y_new) / 2)), cv2_font, font_scale, text_color, 2)
+    cv2.putText(img, text2, (int(x_left + w / 2), y_bottom_1 + 120), cv2_font, font_scale, text_color, 2)
+    cv2.putText(img, text3, (int((start_diag[0] + end_diag[0]) / 2 - 110 - 40), int((start_diag[1] + end_diag[1]) / 2 + 10 + 20)),cv2_font, font_scale, text_color, 2)
 
    # print(f"x_text1 = {x + w + 80}")
     #print(f"y_text1 = {int(y_new + (y_bottom_2 - y_new) / 2)}")
