@@ -12,6 +12,19 @@ from getpic import process_folders
 from dimension_manu import get_dimension_points, detect_product_and_draw_bounds_manual
 from miniphotoshop import manual_overlay_selector, manual_overlay_select_pair, preview_dimension_lines, manual_overlay_select_point
 
+
+cv2_font_dict = {
+    "FONT_HERSHEY_SIMPLEX": cv2.FONT_HERSHEY_SIMPLEX,
+    "FONT_HERSHEY_PLAIN": cv2.FONT_HERSHEY_PLAIN,
+    "FONT_HERSHEY_DUPLEX": cv2.FONT_HERSHEY_DUPLEX,
+    "FONT_HERSHEY_COMPLEX": cv2.FONT_HERSHEY_COMPLEX,
+    "FONT_HERSHEY_TRIPLEX": cv2.FONT_HERSHEY_TRIPLEX,
+    "FONT_HERSHEY_COMPLEX_SMALL": cv2.FONT_HERSHEY_COMPLEX_SMALL,
+    "FONT_HERSHEY_SCRIPT_SIMPLEX": cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
+    "FONT_HERSHEY_SCRIPT_COMPLEX": cv2.FONT_HERSHEY_SCRIPT_COMPLEX,
+}
+
+
 # =========================
 #    MAIN APP CLASS
 # =========================
@@ -27,12 +40,19 @@ class PikeeGeneratorApp:
         self.max_files = 200
         self.actual_input_file_paths = []
         self.stop_processing = False 
+        
+
+        
+        
 
         # Tk root
         self.window = Tk()
         self.window.title("Pikee Generator")
         self.window.geometry('600x690')
         self.window.resizable(False, False)
+
+        self.cv2_font = StringVar(value="FONT_HERSHEY_SIMPLEX")
+        self.source_image_folder = StringVar()
 
         self.notebook = ttk.Notebook(self.window)
         self.notebook.pack(fill='both', expand=True)
@@ -56,6 +76,8 @@ class PikeeGeneratorApp:
         self.setup_tab_organize()
         self.setup_tab4()
 
+
+        
         self.window.mainloop()
 
     # =========================
@@ -86,7 +108,8 @@ class PikeeGeneratorApp:
         frame2 = Frame(tab, bd=2, relief="groove", bg="white")
         frame2.place(x=10, y=230, width=580, height=20)
         default_output_path = r"C:\Users\hoang\OneDrive\Desktop\PikeeGenerator\result"
-        self.label_file_path_output = Label(frame2, text=default_output_path, anchor="w", bg="white")
+
+        self.label_file_path_output = Label(frame2, anchor="w", bg="white")
         self.label_file_path_output.pack(fill="both", expand=True)
 
         Button(tab, text="Browse", command=self.browse_directory_output).place(x=10, y=260)
@@ -143,6 +166,8 @@ class PikeeGeneratorApp:
         threading.Thread(target=self.execute_action).start()
 
     def execute_action(self):
+        selected_font = cv2_font_dict.get(self.cv2_font.get(), cv2.FONT_HERSHEY_SIMPLEX)
+
         try:
             file_paths_text = self.label_file_paths_input.get(1.0, END).strip()
             output_directory = self.label_file_path_output.cget("text")
@@ -159,7 +184,7 @@ class PikeeGeneratorApp:
                     errors.append(f"Amount of chosen Files should not exceed {self.max_files} !")
                     self.text_execution_status.insert(END, "ERRORS:\n" + "\n".join(errors) + "\n", "error")
                     self.text_execution_status.config(state="disabled")
-                    return  
+                    return  # Không cần enable ở đây, sẽ enable ở finally
                 self.stop_processing = False
                 for i, file_path in enumerate(file_paths, 1):
                     if self.stop_processing:
@@ -174,7 +199,8 @@ class PikeeGeneratorApp:
                         detect_product_and_draw_bounds(temp_path, output_path, self.data_excel, input_filename,
                                                        self.line_color, self.text_color,
                                                        font_scale=float(self.font_scale_entry.get()),
-                                                       thickness=int(self.line_thickness_entry.get()))
+                                                       thickness=int(self.line_thickness_entry.get()),
+                                                       cv2_font=selected_font)
                         os.remove(temp_path)
                         successes.append(f"{output_filename}")
                     except Exception as e:
@@ -219,7 +245,7 @@ class PikeeGeneratorApp:
         Entry(frame_code, textvariable=self.code_tab2, width=25).place(x=170, y=10)
         Button(frame_code, text="Load Image", command=self.load_image_by_code_tab2).place(x=420, y=8)
 
-        base_y = 60  
+        base_y = 60  # Tăng mọi thành phần phía dưới lên 50px so với cũ
 
         # Input
         Label(tab, text="Input Image: ").place(x=10, y=base_y)
@@ -252,7 +278,7 @@ class PikeeGeneratorApp:
             self.entry_fields[label]['end_x'].place(x=310, y=y_offset)
             self.entry_fields[label]['end_y'] = Entry(tab, width=6)
             self.entry_fields[label]['end_y'].place(x=360, y=y_offset)
-            # Edit
+            # Nút Edit
             Button(tab, text=f"Edit {label}", command=lambda l=label: self.update_points(l), width=10).place(x=430, y=y_offset-2)
         
         
@@ -336,7 +362,8 @@ class PikeeGeneratorApp:
             if not input_file or not output_dir:
                 messagebox.showerror("Error", "Missing input or output path.")
                 return
-     
+
+            # Lấy các toạ độ điểm và text như bình thường
             selected_points = []
             if self.entry_height_x.get() and self.exit_height_x.get():
                 selected_points.append((int(self.entry_height_x.get()), int(self.entry_height_y.get())))
@@ -358,9 +385,14 @@ class PikeeGeneratorApp:
             text2 = self.number_text2.get().strip() or "(choose) cm"
             text3 = self.number_text3.get().strip() or "(choose) cm"
 
+            
+            selected_font = cv2_font_dict.get(self.cv2_font.get(), cv2.FONT_HERSHEY_SIMPLEX)
+
+
+            # Nếu chọn "Apply for all color"
             if hasattr(self, "apply_for_all_color_tab2") and self.apply_for_all_color_tab2.get():
                 product_code = os.path.basename(input_file)[:6]
-                
+                # Đảm bảo đã chọn thư mục gốc ảnh ở Tab 4
                 folder_origin = self.source_image_folder.get() if hasattr(self, "source_image_folder") else ""
                 if not folder_origin or not os.path.isdir(folder_origin):
                     messagebox.showerror("Error", "Please select the source image folder in Tab 4 first!")
@@ -391,7 +423,9 @@ class PikeeGeneratorApp:
                     line_color=self.line_color, text_color=self.text_color,
                     text1=text1, text2=text2, text3=text3,
                     font_scale=float(self.font_scale_entry.get()),
-                    thickness=int(self.line_thickness_entry.get())
+                    thickness=int(self.line_thickness_entry.get()),
+                    cv2_font=selected_font 
+
                 )
                 os.remove(temp_path)
                 count += 1
@@ -415,7 +449,7 @@ class PikeeGeneratorApp:
             existing_points += fetch_pair(self.entry_width_x, self.entry_width_y, self.exit_width_x, self.exit_width_y)
             existing_points += fetch_pair(self.entry_depth_x, self.entry_depth_y, self.exit_depth_x, self.exit_depth_y)
 
-           
+            # Lấy điểm text positions (nếu có)
             text_points = []
             if self.text1_x.get() and self.text1_y.get():
                 text_points.append((int(self.text1_x.get()), int(self.text1_y.get())))
@@ -431,7 +465,7 @@ class PikeeGeneratorApp:
                 text_points.append(None)
 
             selected_points = manual_overlay_selector(image_path, existing_points=existing_points, text_points=text_points)
-            
+            # Cập nhật lại entry như cũ
             if len(selected_points) >= 2:
                 self.entry_height_x.delete(0, END)
                 self.entry_height_x.insert(0, selected_points[0][0])
@@ -480,15 +514,17 @@ class PikeeGeneratorApp:
             if x1.get() and x2.get():
                 existing = [(int(x1.get()), int(y1.get())), (int(x2.get()), int(y2.get()))]
 
-            
+            # Lấy tất cả các lines Height, Width, Depth (có thể có hoặc None)
             all_lines = self.get_all_lines()
+            # Loại line hiện tại đang edit để tránh trùng (OPTIONAL, hoặc cứ truyền cả 3 cũng được)
+            # Dùng hết cả 3 line (để overlay tự nhận diện)
             background_lines = [line for line in all_lines if line is not None]
 
             pts = manual_overlay_select_pair(
                 path,
                 f"{kind} ",
                 existing_pair=existing,
-                background_lines=background_lines  
+                background_lines=background_lines  # truyền vào overlay để hiện đủ 3 đường
             )
             if len(pts) == 2:
                 x1.delete(0, END)
@@ -661,10 +697,9 @@ class PikeeGeneratorApp:
         Button(tab, text="Browse", command=self.browse_input_tab3).place(x=470, y=18)
 
         # Output Folder
-        Label(tab, text="Output Folder:").place(x=10, y=60)
-        self.output_entry_tab3 = Entry(tab, width=50)
-        
-        self.output_entry_tab3.place(x=140, y=60)
+        Label(tab, text="Source Image Folder:").place(x=10, y=60)
+        self.output_label_tab3 = Label(tab, textvariable=self.source_image_folder, anchor="w", bg="white",relief="groove", width=43)
+        self.output_label_tab3.place(x=140, y=60)
         Button(tab, text="Browse", command=self.browse_output_tab3).place(x=470, y=58)
 
         # Start Product Code
@@ -698,19 +733,19 @@ class PikeeGeneratorApp:
             "Note:\n Selected Images in Input Folder must be located inside a '_shops' folder within each product code folder."
         )
 
-        
+        # Chỉ tạo 1 Text widget và cho vừa trong frame
         text_widget = Text(
             text_frame,
             wrap="word",
-            width=60,        
-            height=11,       
+            width=60,        # vừa với frame width=500, Arial 10
+            height=11,       # đủ với frame height=200
             font=("Arial", 10),
             bg=default_bg,
             bd=0,
             padx=4,
             pady=4
         )
-        text_widget.place(x=1, y=1, width=490, height=195)  
+        text_widget.place(x=1, y=1, width=490, height=195)  # phủ kín text_frame
         text_widget.insert("1.0", instruction)
         text_widget.config(state="disabled")
 
@@ -724,8 +759,7 @@ class PikeeGeneratorApp:
     def browse_output_tab3(self):
         folder = filedialog.askdirectory()
         if folder:
-            self.output_entry_tab3.delete(0, END)
-            self.output_entry_tab3.insert(0, folder)
+            self.source_image_folder.set(folder)
 
     def update_progress_tab3(self, progress, total):
         percent = (progress / total) * 100
@@ -738,7 +772,8 @@ class PikeeGeneratorApp:
 
     def run_image_extraction(self):
         parent_folder = self.input_entry_tab3.get()
-        output_folder = self.output_entry_tab3.get()
+        output_folder = self.source_image_folder.get()
+
         start_code = self.start_code_entry.get().strip()
         end_code = self.end_code_entry.get().strip()
         if not os.path.isdir(parent_folder) or not os.path.isdir(output_folder):
@@ -776,9 +811,12 @@ class PikeeGeneratorApp:
         # Output Folder
         Label(tab, text="Output Folder: ", anchor="w", font=("Arial", 10)).place(x=10, y=190)
         self.organize_output_path = StringVar()
+        self.organize_output_path.set("P:\\")
+
         frame_output = Frame(tab, bd=2, relief="groove", bg="white")
         frame_output.place(x=10, y=210, width=580, height=20)
-        self.organize_output_label = Label(frame_output, text="", anchor="w", bg="white")
+
+        self.organize_output_label = Label(frame_output,  textvariable=self.organize_output_path, anchor="w", bg="white")
         self.organize_output_label.pack(fill="both", expand=True)
         Button(tab, text="Browse", command=self.organize_browse_output).place(x=10, y=240)
 
@@ -811,24 +849,27 @@ class PikeeGeneratorApp:
             
         )
 
-        
+        # Chỉ tạo 1 Text widget và cho vừa trong frame
         text_widget = Text(
             text_frame,
             wrap="word",
-            width=60,       
-            height=11,       
+            width=60,        # vừa với frame width=500, Arial 10
+            height=11,       # đủ với frame height=200
             font=("Arial", 10),
             bg=default_bg,
             bd=0,
             padx=4,
             pady=4
         )
-        text_widget.place(x=1, y=1, width=490, height=195)  
+        text_widget.place(x=1, y=1, width=490, height=195)  # phủ kín text_frame
         text_widget.insert("1.0", instruction)
         text_widget.config(state="disabled")
     
     def organize_browse_input(self):
-        files = filedialog.askopenfilenames(title="Select picture '_size.jpg'", filetypes=[("JPG Files", "*_size.jpg")])
+        files = filedialog.askopenfilenames(title="Select picture ", filetypes=[
+        ("Image Files", "*.jpg;*.jpeg;*.png;*.bmp;*.gif"),
+        ("All Files", "*.*")
+    ])
         if files:
             self.organize_input_files = list(files)
             self.organize_input_text.config(state="normal")
@@ -863,8 +904,8 @@ class PikeeGeneratorApp:
             success, error = [], []
             for f in files:
                 basename = os.path.basename(f)
-                if not basename.endswith("_size.jpg"):
-                    continue
+                #if not basename.endswith("_size.jpg"):
+                #    continue
                 product_code = basename[:6]  # Chỉ lấy 6 ký tự đầu
                 base_folder = os.path.join(out_folder, product_code)
                 shops_folder = os.path.join(base_folder, f"{product_code}_shops")
@@ -904,19 +945,18 @@ class PikeeGeneratorApp:
 
 
     # =========================
-    #         TAB 4
+    #         TAB 4 - Settings
     # =========================
 
     def setup_tab4(self):
         tab = self.tab4
         default_bg = tab.cget("background")
+
         #Folder Browse 
         frame_source_img= Frame(tab,bd=2,relief="groove",bg=default_bg)
         frame_source_img.place(x=10,y=370,width=580,height=80)
         Label(frame_source_img,text= "Source Image Folder: ",anchor="w",font=("Arial", 10)).place(x=10, y=10)
-        self.source_image_folder = StringVar()
         Label(frame_source_img, textvariable=self.source_image_folder, bg="white", bd=2, relief="groove", width=55, anchor="w").place(x=150, y=10)
-
         Button(frame_source_img, text="Browse", command=self.browse_source_image_folder).place(x=260, y=40)
 
         
@@ -940,6 +980,7 @@ class PikeeGeneratorApp:
         self.label_text_preview.place(x=100, y=50)
         Button(frame_colors, text="Choose", command=self.choose_line_color).place(x=190, y=7)
         Button(frame_colors, text="Choose", command=self.choose_text_color).place(x=190, y=47)
+        
         # Font/Line
         frame_font_line = Frame(tab, bd=2, relief="groove", bg=default_bg)
         frame_font_line.place(x=10, y=230, width=580, height=130)
@@ -962,6 +1003,26 @@ class PikeeGeneratorApp:
             text="Note : 'Source Image Folder' is where contains all the Original Pictures got extracted ",
             fg="black", bg="#fffbe7", font=("Arial", 10, "bold")
         ).place(x=10, y=7)
+
+        # Font
+        Label(frame_font_line, text="CV2 Font:", font=("Arial", 10)).place(x=320, y=10)
+
+        cv2_font_list = [
+            "FONT_HERSHEY_SIMPLEX",
+            "FONT_HERSHEY_PLAIN",
+            "FONT_HERSHEY_DUPLEX",
+            "FONT_HERSHEY_COMPLEX",
+            "FONT_HERSHEY_TRIPLEX",
+            "FONT_HERSHEY_COMPLEX_SMALL",
+            "FONT_HERSHEY_SCRIPT_SIMPLEX",
+            "FONT_HERSHEY_SCRIPT_COMPLEX"
+        ]
+        self.cv2_font_menu = ttk.Combobox(
+            frame_font_line, textvariable=self.cv2_font, values=cv2_font_list, state="readonly", width=24
+        )
+        self.cv2_font_menu.place(x=400, y=10)
+        self.cv2_font_menu.set(self.cv2_font.get())
+
 
 
     def browse_source_image_folder(self):
@@ -996,7 +1057,7 @@ class PikeeGeneratorApp:
         try:
             self.font_scale = float(self.font_scale_entry.get())
             self.line_thickness = int(self.line_thickness_entry.get())
-            messagebox.showinfo("Success", "Font scale and thickness updated.")
+            messagebox.showinfo("Success", "Font scale,Thickness and Font Style updated.")
         except:
             messagebox.showerror("Error", "Invalid number format!")
 
